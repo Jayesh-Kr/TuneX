@@ -403,4 +403,107 @@ class MusicPlayerController {
     }
 }
 
+// Initialize the music player when DOM is loaded
+let musicPlayer;
 
+document.addEventListener('DOMContentLoaded', () => {
+    musicPlayer = new MusicPlayerController();
+    
+    // Set initial volume
+    musicPlayer.audio.volume = 0.5;
+    musicPlayer.volumeBar.value = 50;
+    
+    // Initialize modal functionality
+    initializeModal();
+    
+    console.log('Music Player Initialized!');
+    console.log('Use musicPlayer.addNewMusic() to add new songs');
+    console.log('Use musicPlayer.insertMusicAt() to insert at specific position');
+    console.log('Use musicPlayer.removeMusicById() to remove songs');
+});
+
+// Modal functionality
+function initializeModal() {
+    const modal = document.getElementById('addMusicModal');
+    const addMusicBtn = document.getElementById('addMusicBtn');
+    const closeBtn = document.querySelector('.close');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const form = document.getElementById('addMusicForm');
+
+    // Open modal
+    addMusicBtn.addEventListener('click', () => {
+        modal.style.display = 'block';
+    });
+
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        form.reset();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        form.reset();
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+            form.reset();
+        }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('musicTitle').value;
+        const artist = document.getElementById('musicArtist').value;
+        const audioFile = document.getElementById('musicAudioFile').files[0];
+        const albumArtFile = document.getElementById('musicAlbumArt').files[0];
+        
+        if (!audioFile) {
+            alert('Please select an audio file!');
+            return;
+        }
+        
+        // Create object URLs for the files
+        const audioSrc = URL.createObjectURL(audioFile);
+        
+        // Use uploaded image or random placeholder from Unsplash
+        let albumArt;
+        if (albumArtFile) {
+            albumArt = URL.createObjectURL(albumArtFile);
+        } else {
+            // Generate random album art from Unsplash with music/album theme
+            const randomId = Math.floor(Math.random() * 1000);
+            albumArt = `https://picsum.photos/seed/${randomId}/400/400`;
+        }
+        
+        // Create a temporary audio element to get duration
+        const tempAudio = new Audio(audioSrc);
+        tempAudio.addEventListener('loadedmetadata', () => {
+            const duration = formatTime(tempAudio.duration);
+            
+            // Generate unique ID based on current playlist size
+            const newId = musicPlayer.playlist.size + 1;
+            
+            // Add music to playlist
+            musicPlayer.addNewMusic(newId, title, artist, albumArt, duration, audioSrc);
+            
+            // Show success message
+            alert(`"${title}" by ${artist} has been imported to your playlist!`);
+            
+            // Close modal and reset form
+            modal.style.display = 'none';
+            form.reset();
+        });
+    });
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
